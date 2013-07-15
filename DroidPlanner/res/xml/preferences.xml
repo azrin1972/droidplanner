@@ -11,7 +11,13 @@
             android:key="pref_connection_type"
             android:summary="Which link to use to connect to the drone"
             android:title="Telemetry Connection Type" />
-
+        <ListPreference
+            android:defaultValue="57600"
+            android:entries="@array/TelemetryBaudTypes"
+            android:entryValues="@array/TelemetryBaudTypes"
+            android:key="pref_baud_type"
+            android:summary="Baud Rate of the USB Telementry Link"
+            android:title="Telemetry link speed" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="pref_mavlink_log_enabled"
@@ -62,7 +68,7 @@
             android:inputType="number"
             android:key="pref_max_fligth_path_size"
             android:summary="Size of the fligth path, set to zero to disable."
-            android:title="Fligth path size" />
+            android:title="Flight path size" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="pref_guided_mode_enabled"
@@ -113,5 +119,19 @@
             android:summary="Audible messages for important events"
             android:title="Enable Text To Speech" />
     </PreferenceCategory>
-
+    <PreferenceCategory
+        android:key="pref_connection_actions"
+        android:title="While Connected to Drone" 
+        android:summary="Actions to perform on or while connected to the Drone\nTo apply disconnect and reconnect">
+        <CheckBoxPreference 
+            android:defaultValue="true"
+            android:title="Keep Screen bright" 
+            android:summary="If unchecked the Screen will dim after a while (safes Battery)" 
+            android:key="pref_keep_screen_bright"/>
+       	<CheckBoxPreference 
+            android:defaultValue="true"
+            android:title="Lock Screen Orientation"  
+            android:summary="Locks screen to the orientation which is present when connecting" 
+            android:key="pref_lock_screen_orientation"/>
+	</PreferenceCategory>
 </PreferenceScreen>

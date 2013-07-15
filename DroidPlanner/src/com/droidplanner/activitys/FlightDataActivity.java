@@ -38,8 +38,8 @@ public class FlightDataActivity extends SuperActivity implements OnFlighDataList
 		super.onCreate(savedInstanceState);
 	
 		setContentView(R.layout.flightdata);
-		flightMapFragment = ((FlightMapFragment)getFragmentManager().findFragmentById(R.id.flightMapFragment));
 				
+		flightMapFragment = ((FlightMapFragment)getFragmentManager().findFragmentById(R.id.flightMapFragment));
 		flightMapFragment.updateMissionPath(drone);
 		flightMapFragment.updateHomeToMap(drone);
 		
@@ -139,7 +139,7 @@ public class FlightDataActivity extends SuperActivity implements OnFlighDataList
 	public void onDroneTypeChanged() {
 		Log.d("DRONE", "Drone type changed");
 		fligthModeSpinner.updateModeSpinner(drone);
-		flightMapFragment.updateDroneMarkers();
+		flightMapFragment.droneMarker.updateDroneMarkers();
 	}
 
 	@Override
