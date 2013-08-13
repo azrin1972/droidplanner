@@ -18,6 +18,7 @@
     <string name="menu_record_me">Record</string>
     <string name="menu_clear">Clear WPs</string>
     <string name="menu_zoom">Zoom</string>
+    <string name="menu_circle">Circle</string>
     <string name="file_saved">File Saved</string>
     <string name="no_waypoint_files">No Waypoint Files</string>
     <string name="no_files">No Files</string>

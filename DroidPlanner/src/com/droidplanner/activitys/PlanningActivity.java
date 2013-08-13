@@ -136,6 +136,9 @@ public class PlanningActivity extends SuperActivity implements
 			setMode(modes.MISSION);
 			update();
 			return true;
+		case R.id.menu_draw_circle:
+			gestureMapFragment.enableCircleDetection();
+			return true;
 		default:
 			return super.onMenuItemSelected(featureId, item);
 		}
@@ -183,8 +186,7 @@ public class PlanningActivity extends SuperActivity implements
 
 	@Override
 	public void onMapClick(LatLng point) {
-		Toast.makeText(this, "Draw your path", Toast.LENGTH_SHORT).show();
-		gestureMapFragment.enableGestureDetection();
+		gestureMapFragment.enablePathDetection();
 	}
 
 	@Override

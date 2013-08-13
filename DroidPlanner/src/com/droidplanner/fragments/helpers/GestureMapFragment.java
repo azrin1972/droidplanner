@@ -12,15 +12,23 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.droidplanner.R;
+import com.droidplanner.activitys.PlanningActivity.modes;
 
 public class GestureMapFragment extends Fragment implements OnGestureListener {
+	public enum modes {
+		PATH, CIRCLE
+	}
+
 	private static final int TOLERANCE = 15;
 	private static final int STROKE_WIDTH = 3;
 
+	public modes mode = modes.PATH;
+
 	private double toleranceInPixels;
-	
+
 	public interface OnPathFinishedListner {
 
 		void onPathFinished(List<Point> path);
@@ -37,7 +45,7 @@ public class GestureMapFragment extends Fragment implements OnGestureListener {
 		overlay = (GestureOverlayView) view.findViewById(R.id.overlay1);
 		overlay.addOnGestureListener(this);
 		overlay.setEnabled(false);
-		
+
 		overlay.setGestureStrokeWidth(scaleDpToPixels(STROKE_WIDTH));
 		toleranceInPixels = scaleDpToPixels(TOLERANCE);
 		return view;
@@ -45,10 +53,24 @@ public class GestureMapFragment extends Fragment implements OnGestureListener {
 
 	private int scaleDpToPixels(double value) {
 		final float scale = getResources().getDisplayMetrics().density;
-		return (int) Math.round(value*scale);
+		return (int) Math.round(value * scale);
 	}
 
-	public void enableGestureDetection() {
+	public void enablePathDetection() {
+		Toast.makeText(getActivity(), "Draw your path", Toast.LENGTH_SHORT)
+				.show();
+		mode = modes.PATH;
+		enableGestureDetection();
+	}
+
+	public void enableCircleDetection() {
+		Toast.makeText(getActivity(), "Draw your circle", Toast.LENGTH_SHORT)
+				.show();
+		mode = modes.CIRCLE;
+		enableGestureDetection();
+	}
+
+	private void enableGestureDetection() {
 		overlay.setEnabled(true);
 	}
 
@@ -59,16 +81,23 @@ public class GestureMapFragment extends Fragment implements OnGestureListener {
 	@Override
 	public void onGestureEnded(GestureOverlayView arg0, MotionEvent arg1) {
 		overlay.setEnabled(false);
-		List<Point> path = decodeGesture();
-		if (path.size() > 1) {
-			path = Simplify.simplify(path, toleranceInPixels);
+		switch (mode) {
+		default:
+		case PATH:
+			List<Point> path = decodeGesture();
+			if (path.size() > 1) {
+				path = Simplify.simplify(path, toleranceInPixels);
+			}
+			listner.onPathFinished(path);
+			break;
+		case CIRCLE:
+			break;
 		}
-		listner.onPathFinished(path);
 	}
 
 	private List<Point> decodeGesture() {
 		List<Point> path = new ArrayList<Point>();
-		extractPathFromGesture(path);		
+		extractPathFromGesture(path);
 		return path;
 	}
 
