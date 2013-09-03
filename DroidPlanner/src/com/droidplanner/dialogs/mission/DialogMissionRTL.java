@@ -28,6 +28,7 @@ public class DialogMissionRTL extends DialogMission implements
 	@Override
 	public void onSeekBarChanged() {
 		wp.setHeight(altitudeSeekBar.getValue());
+		wp.missionItem.param2 = 0; //make delay = 0;
 	}
 
 

@@ -26,7 +26,7 @@
     </com.droidplanner.widgets.SeekBarWithText.SeekBarWithText>
 
     <com.droidplanner.widgets.SeekBarWithText.SeekBarWithText
-        android:id="@+id/takeoffPitch"
+        android:id="@+id/takeoffAngle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="2dp"

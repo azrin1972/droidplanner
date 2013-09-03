@@ -67,6 +67,7 @@ public class DialogMissionLoiterN extends DialogMission implements
 		if (loiterCCW.isChecked()) {
 			wp.missionItem.param1 *= -1.0;
 		}
+		wp.missionItem.param2 = 0; //make delay = 0;
 	}
 
 }

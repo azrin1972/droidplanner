@@ -35,6 +35,7 @@ public class DialogMissionLoiterT extends DialogMission implements
 	public void onSeekBarChanged() {
 		wp.setHeight(altitudeSeekBar.getValue());
 		wp.missionItem.param1 = (float) loiterTimeSeekBar.getValue();
+		wp.missionItem.param2 = 0; //make delay = 0;
 	}
 
 

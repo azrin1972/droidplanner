@@ -9,9 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import com.droidplanner.drone.variables.waypoint;
 
 import com.droidplanner.R;
-import com.droidplanner.drone.variables.waypoint;
 
 public class MissionRow extends ArrayAdapter<waypoint> {
 
@@ -21,6 +21,8 @@ public class MissionRow extends ArrayAdapter<waypoint> {
 	private TextView nameView;
 	private TextView altitudeView;
 	private TextView typeView;
+	private TextView delayView;
+	private String tmpStr;
 
 	public MissionRow(Context context, int resource, List<waypoint> objects) {
 		super(context, resource, objects);
@@ -57,17 +59,49 @@ public class MissionRow extends ArrayAdapter<waypoint> {
 		nameView = (TextView) view.findViewById(R.id.rowNameView);
 		altitudeView = (TextView) view.findViewById(R.id.rowAltitudeView);
 		typeView = (TextView) view.findViewById(R.id.rowTypeView);
+		delayView = (TextView) view.findViewById(R.id.rowDelayView);
 	}
 
 	private void setupViewsText(waypoint waypoint) {
-		if (waypoint.getCmd().isNavigation()) {
-			altitudeView.setText(String.format(Locale.ENGLISH, "%3.0fm", waypoint.getHeight()));
-		} else {
-			altitudeView.setText("-");
-		}
+		
 		nameView.setText(String.format("%3d", waypoint
 				.getNumber()));
-		typeView.setText(waypoint.getCmd().getName());
+
+		tmpStr = "";
+		if (waypoint.getCmd().isNavigation()) {
+			tmpStr = String.format(Locale.ENGLISH, "%3.0fm", waypoint.getHeight());
+		} 
+		else {
+			tmpStr = "-";
+		}
+		altitudeView.setText(tmpStr);
+		
+		tmpStr="";
+		
+		tmpStr = waypoint.getCmd().getName()+"\n";
+
+		if(waypoint.getCmd().getName()=="Loiter") {	
+			tmpStr += "° turns";
+		}
+		else if (waypoint.getCmd().getName()=="LoiterN") {
+		
+			tmpStr += String.format(Locale.ENGLISH, "%3.0f", waypoint.missionItem.param1);
+			if(waypoint.missionItem.param1<0)
+				tmpStr += "CCW";
+			else
+				tmpStr += "CW";
+		}
+		else if (waypoint.getCmd().getName()=="LoiterT") {
+			tmpStr += String.format(Locale.ENGLISH, "%3.1fs", waypoint.missionItem.param1);
+		}
+		else if (waypoint.getCmd().getName()=="Takeoff") {
+			tmpStr += String.format(Locale.ENGLISH, "%3.1f¡", waypoint.missionItem.param1);
+		}
+		
+		typeView.setText(tmpStr);
+
+		
+		delayView.setText(String.format(Locale.ENGLISH, "%3.1fs", waypoint.missionItem.param2));
 	}
 
 }

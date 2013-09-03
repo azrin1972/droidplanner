@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/missionFragment"
         android:name="com.droidplanner.fragments.MissionFragment"
-        android:layout_width="220dp"
+        android:layout_width="260dp"
         android:layout_height="match_parent" />
 
     <fragment

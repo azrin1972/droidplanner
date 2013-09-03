@@ -24,7 +24,7 @@ public class DialogMissionTakeoff extends DialogMission implements
 		altitudeSeekBar.setOnChangedListner(this);
 
 		angleSeekBar = (SeekBarWithText) view
-				.findViewById(R.id.takeoffPitch);
+				.findViewById(R.id.takeoffAngle);
 		angleSeekBar.setValue(wp.missionItem.param1);
 		angleSeekBar.setOnChangedListner(this);
 
