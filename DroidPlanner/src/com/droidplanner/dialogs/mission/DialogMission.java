@@ -28,6 +28,7 @@ public abstract class DialogMission implements OnItemSelectedListener,
 	private ApmCommandsAdapter commandAdapter;
 	private AlertDialog dialog;
 	private Context context;
+	protected Context context;
 	protected waypoint wp;
 	protected View view;
 
