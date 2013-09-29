@@ -38,6 +38,7 @@ public class SurveyViews {
 	private View layout;
 	protected ToggleButton modeButton;
 	private Button clearPolyButton;
+	public CheckBox footprintCheckBox;
 
 	public SurveyViews(Context context) {
 		this.context = context;
@@ -47,23 +48,22 @@ public class SurveyViews {
 		footprintTextView.setText(context.getString(string.footprint) + ": "
 				+ surveyData.getLateralFootPrint() + " x"
 				+ surveyData.getLongitudinalFootPrint());
-		groundResolutionTextView.setText(context.getString(string.ground_resolution)+surveyData.getGroundResolution()+"/px");
-		distanceTextView
-				.setText(context.getString(string.distance_between_pictures)
-						+ ": "
-						+ surveyData.getLongitudinalPictureDistance());
+		groundResolutionTextView.setText(context
+				.getString(string.ground_resolution)
+				+ surveyData.getGroundResolution() + "/px");
+		distanceTextView.setText(context
+				.getString(string.distance_between_pictures)
+				+ ": "
+				+ surveyData.getLongitudinalPictureDistance());
 		distanceBetweenLinesTextView.setText(context
 				.getString(string.distance_between_lines)
 				+ ": "
 				+ surveyData.getLateralPictureDistance());
-		areaTextView.setText(context.getString(string.area) + ": "
-				+ area);
+		areaTextView.setText(context.getString(string.area) + ": " + area);
 		lengthView.setText(context.getString(string.mission_length) + ": "
 				+ grid.getLength());
-		numberOfPicturesView.setText(context.getString(string.pictures)
-				+ ": "
-				+ (int) (grid.getLength().valueInMeters() / surveyData
-						.getLongitudinalPictureDistance().valueInMeters()));
+		numberOfPicturesView.setText(context.getString(string.pictures) + ": "
+				+ grid.getCameraCount());
 		numberOfStripsView.setText(context.getString(string.number_of_strips)
 				+ ": " + grid.getNumberOfLines());
 	}
@@ -88,13 +88,16 @@ public class SurveyViews {
 		overlapView.setValue(surveyData.getOverlap());
 	}
 
-	public void build(LayoutInflater inflater, ViewGroup container, SurveyFragment surveyDialog) {
+	public void build(LayoutInflater inflater, ViewGroup container,
+			SurveyFragment surveyDialog) {
 		layout = inflater.inflate(R.layout.fragment_survey, null);
 		cameraSpinner = (SpinnerSelfSelect) layout
 				.findViewById(id.cameraFileSpinner);
 		modeButton = (ToggleButton) layout.findViewById(id.surveyModeButton);
 		clearPolyButton = (Button) layout.findViewById(id.clearPolyButton);
-		
+		footprintCheckBox = (CheckBox) layout
+				.findViewById(id.CheckBoxFootprints);
+
 		angleView = (SeekBarWithText) layout.findViewById(id.angleView);
 		overlapView = (SeekBarWithText) layout.findViewById(id.overlapView);
 		sidelapView = (SeekBarWithText) layout.findViewById(id.sidelapView);
@@ -116,6 +119,7 @@ public class SurveyViews {
 				.findViewById(id.numberOfStripsTextView);
 		lengthView = (TextView) layout.findViewById(id.lengthTextView);
 
+		footprintCheckBox.setOnClickListener(surveyDialog);
 		angleView.setOnChangedListner(surveyDialog);
 		altitudeView.setOnChangedListner(surveyDialog);
 		overlapView.setOnChangedListner(surveyDialog);

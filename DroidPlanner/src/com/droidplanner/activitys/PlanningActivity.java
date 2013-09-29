@@ -35,6 +35,7 @@ import com.droidplanner.helpers.geoTools.PolylineTools;
 import com.droidplanner.helpers.units.Length;
 import com.droidplanner.polygon.Polygon;
 import com.droidplanner.polygon.PolygonPoint;
+import com.droidplanner.survey.grid.Grid;
 import com.google.android.gms.maps.model.LatLng;
 
 public class PlanningActivity extends SuperActivity implements
@@ -256,8 +257,12 @@ public class PlanningActivity extends SuperActivity implements
 	}
 
 	@Override
-	public void onNewGrid(List<waypoint> grid) {
-		drone.mission.setWaypoints(grid);
+	public void onNewGrid(Grid grid) {
+		drone.mission.setWaypoints(grid.getWaypoints());
+		planningMapFragment.cameraOverlays.removeAll();
+		if (surveyFragment.isFootPrintOverlayEnabled()) {
+			planningMapFragment.cameraOverlays.addOverlays(grid.getCameraLocations(), surveyFragment.getSurveyData());		
+		}
 		update();		
 	}
 

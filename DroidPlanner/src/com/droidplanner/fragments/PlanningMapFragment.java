@@ -1,5 +1,6 @@
 package com.droidplanner.fragments;
 
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import com.droidplanner.dialogs.mission.DialogMissionFactory;
 import com.droidplanner.drone.variables.Mission;
 import com.droidplanner.drone.variables.waypoint;
+import com.droidplanner.fragments.helpers.CameraGroundOverlays;
 import com.droidplanner.fragments.helpers.DroneMap;
 import com.droidplanner.fragments.helpers.MapPath;
 import com.droidplanner.fragments.helpers.OnMapInteractionListener;
@@ -27,11 +29,14 @@ import com.google.android.gms.maps.model.Marker;
 
 @SuppressLint("UseSparseArrays")
 public class PlanningMapFragment extends DroneMap implements
-		OnMapLongClickListener, OnMarkerDragListener, OnMapClickListener, OnMarkerClickListener {
+		OnMapLongClickListener, OnMarkerDragListener, OnMapClickListener,
+		OnMarkerClickListener {
 
 	public OnMapInteractionListener mListener;
 	private MapPath polygonPath;
 	private Mission mission;
+
+	public CameraGroundOverlays cameraOverlays;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup viewGroup,
@@ -42,8 +47,9 @@ public class PlanningMapFragment extends DroneMap implements
 		mMap.setOnMarkerClickListener(this);
 		mMap.setOnMapClickListener(this);
 		mMap.setOnMapLongClickListener(this);
-		polygonPath = new MapPath(mMap,Color.BLACK,2);
-		 
+		polygonPath = new MapPath(mMap, Color.BLACK, 2);
+		cameraOverlays = new CameraGroundOverlays(mMap);
+
 		return view;
 	}
 
@@ -51,9 +57,9 @@ public class PlanningMapFragment extends DroneMap implements
 		markers.clear();
 
 		Context context = getActivity().getApplicationContext();
-		markers.updateMarker(mission.getHome(), false,context);
-		markers.updateMarkers(mission.getWaypoints(), true,context);
-		markers.updateMarkers(polygon.getPolygonPoints(), true,context);
+		markers.updateMarker(mission.getHome(), false, context);
+		markers.updateMarkers(mission.getWaypoints(), true, context);
+		markers.updateMarkers(polygon.getPolygonPoints(), true, context);
 
 		polygonPath.update(polygon);
 		missionPath.update(mission);
@@ -94,7 +100,7 @@ public class PlanningMapFragment extends DroneMap implements
 
 	@Override
 	public void onMapClick(LatLng point) {
-		mListener.onMapClick(point);		
+		mListener.onMapClick(point);
 	}
 
 	@Override
@@ -107,9 +113,10 @@ public class PlanningMapFragment extends DroneMap implements
 	public boolean onMarkerClick(Marker marker) {
 		MarkerSource source = markers.getSourceFromMarker(marker);
 		if (source instanceof waypoint) {
-			DialogMissionFactory.getDialog((waypoint)source, this.getActivity(),mission); 
+			DialogMissionFactory.getDialog((waypoint) source,
+					this.getActivity(), mission);
 			return true;
-		}else{
+		} else {
 			return false;
 		}
 	}
@@ -117,6 +124,5 @@ public class PlanningMapFragment extends DroneMap implements
 	public void setMission(Mission mission) {
 		this.mission = mission;
 	}
-
 
 }

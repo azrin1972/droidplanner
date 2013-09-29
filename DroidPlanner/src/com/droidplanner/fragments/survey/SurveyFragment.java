@@ -1,7 +1,5 @@
 package com.droidplanner.fragments.survey;
 
-import java.util.List;
-
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -13,7 +11,6 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.droidplanner.R;
-import com.droidplanner.drone.variables.waypoint;
 import com.droidplanner.file.IO.CameraInfo;
 import com.droidplanner.file.IO.CameraInfoReader;
 import com.droidplanner.file.help.CameraInfoLoader;
@@ -30,7 +27,7 @@ public class SurveyFragment extends Fragment implements
 	//public abstract void onPolygonGenerated(List<waypoint> list);
 
 	public interface OnNewGridListner{
-		public void onNewGrid(List<waypoint> grid);
+		public void onNewGrid(Grid grid);
 		public void onClearPolygon();
 	}
 	
@@ -56,10 +53,7 @@ public class SurveyFragment extends Fragment implements
 		views = new SurveyViews(context);
 		views.build(inflater, container,this);
 		
-		//TODO find better values for the bellow
-		double defaultHatchAngle = 0;
-		double defaultAltitude = 0;
-		surveyData = new SurveyData(Math.floor(defaultHatchAngle), defaultAltitude);
+		surveyData = new SurveyData();
 		avaliableCameras = new CameraInfoLoader(context);
 		views.updateCameraSpinner(avaliableCameras.getCameraInfoList());
 		
@@ -69,6 +63,7 @@ public class SurveyFragment extends Fragment implements
 	public void setSurveyData(Polygon polygon, double defaultAltitude){
 		this.polygon = polygon;		
 		surveyData.setAltitude(defaultAltitude);
+		update();
 	}
 	
 	public void setOnSurveyListner(OnNewGridListner listner){
@@ -88,20 +83,14 @@ public class SurveyFragment extends Fragment implements
 		
 		try {
 			GridBuilder gridBuilder = new GridBuilder(polygon, surveyData, new LatLng(0, 0));
-			checkIfPolygonIsValid(polygon);
+			polygon.checkIfValid();
 			grid = gridBuilder.generate();
-			views.updateViews(surveyData,grid,polygon.getArea()); 
-			
-			onSurveyListner.onNewGrid(grid.getWaypoints(surveyData.getAltitude()));
+			views.updateViews(surveyData,grid,polygon.getArea());
+			grid.setAltitude(surveyData.getAltitude());
+			onSurveyListner.onNewGrid(grid);
 		} catch (Exception e) {
 			Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
 			views.blank();
-		}
-	}
-	
-	private void checkIfPolygonIsValid(Polygon polygon) throws Exception {
-		if (!polygon.isValid()) {
-			throw new Exception("Invalid Polygon");			
 		}
 	}
 
@@ -126,17 +115,21 @@ public class SurveyFragment extends Fragment implements
 
 	private void update() {
 		views.updateSeekBarsValues(surveyData);
-		onSeekBarChanged();
+		generateGrid();
 	}
 	
 	@Override
 	public void onClick(View view) {
 		switch (view.getId()) {
 		case R.id.checkBoxInnerWPs:
-			surveyData.setInnerWpsState(views.innerWPsCheckbox.isChecked());			
+			surveyData.setInnerWpsState(views.innerWPsCheckbox.isChecked());
+			update();
 			break;
 		case R.id.clearPolyButton:
 			onSurveyListner.onClearPolygon();
+			break;
+		case R.id.CheckBoxFootprints:
+			update();
 			break;
 		}
 		
@@ -148,6 +141,14 @@ public class SurveyFragment extends Fragment implements
 		}else{
 			return pathModes.MISSION;
 		}
+	}
+
+	public  SurveyData getSurveyData() {
+		return surveyData;
+	}
+
+	public boolean isFootPrintOverlayEnabled() {
+		return views.footprintCheckBox.isChecked();
 	}
 
 }
