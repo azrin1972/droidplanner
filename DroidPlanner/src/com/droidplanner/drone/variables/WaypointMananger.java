@@ -51,6 +51,7 @@ public class WaypointMananger extends DroneVariable {
 			waypoints.addAll(data);
 			writeIndex = 0;
 			state = waypointStates.WRITTING_WP;
+			doBeginWaypointUploading();
 			MavLinkWaypoint.sendWaypointCount(myDrone, waypoints.size());
 		}
 	}
@@ -151,6 +152,7 @@ public class WaypointMananger extends DroneVariable {
 				MavLinkWaypoint.sendWaypoint(myDrone, writeIndex,
 						waypoints.get(writeIndex));
 				writeIndex++;
+				doWaypointUploaded(waypoints.get(writeIndex-1),writeIndex,waypoints.size());
 				if (writeIndex >= waypoints.size()) {
 					state = waypointStates.WAITING_WRITE_ACK;
 				}
@@ -161,6 +163,7 @@ public class WaypointMananger extends DroneVariable {
 			if (msg.msgid == msg_mission_ack.MAVLINK_MSG_ID_MISSION_ACK) {
 				myDrone.mission.onWriteWaypoints((msg_mission_ack) msg);
 				state = waypointStates.IDLE;
+				doEndWaypointUploading(waypoints);
 				return true;
 			}
 			break;
@@ -196,6 +199,24 @@ public class WaypointMananger extends DroneVariable {
 	private void doWaypointReceived(waypoint wp, int index, int count) {
 		if (listener != null) {
 			listener.onWaypointReceived(wp, index, count);
+		}
+	}
+
+	private void doEndWaypointUploading(List<waypoint> waypoints) {
+		if (listener != null) {
+			listener.onEndUploadingWaypoints(waypoints);
+		}
+	}
+
+	private void doBeginWaypointUploading() {
+		if (listener != null) {
+			listener.onBeginUploadingWaypoints();
+		}
+	}
+
+	private void doWaypointUploaded(waypoint wp, int index, int count) {
+		if (listener != null) {
+			listener.onWaypointUploaded(wp, index, count);
 		}
 	}
 

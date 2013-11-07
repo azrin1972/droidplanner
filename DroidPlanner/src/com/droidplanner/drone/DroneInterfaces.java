@@ -37,5 +37,9 @@ public class DroneInterfaces {
 		public void onBeginReceivingWaypoints();
 		public void onWaypointReceived(waypoint wp, int index, int count);
 		public void onEndReceivingWaypoints(List<waypoint> waypoints);
+		
+		public void onBeginUploadingWaypoints();
+		public void onWaypointUploaded(waypoint wp, int index, int count);
+		public void onEndUploadingWaypoints(List<waypoint> waypoints);
 	}
 }
