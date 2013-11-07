@@ -12,6 +12,7 @@ import com.MAVLink.Messages.ardupilotmega.msg_mission_item_reached;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_request;
 import com.droidplanner.MAVLink.MavLinkWaypoint;
 import com.droidplanner.drone.Drone;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerListener;
 import com.droidplanner.drone.DroneVariable;
 
 /**
@@ -23,6 +24,9 @@ import com.droidplanner.drone.DroneVariable;
  * 
  */
 public class WaypointMananger extends DroneVariable {
+
+	private OnWaypointManagerListener listener;
+
 	/**
 	 * Try to receive all waypoints from the MAV.
 	 * 
@@ -118,6 +122,7 @@ public class WaypointMananger extends DroneVariable {
 		case READ_REQUEST:
 			if (msg.msgid == msg_mission_count.MAVLINK_MSG_ID_MISSION_COUNT) {
 				waypointCount = ((msg_mission_count) msg).count;
+				doBeginWaypointReceiving();
 				waypoints.clear();
 				MavLinkWaypoint.requestWayPoint(myDrone, waypoints.size());
 				state = waypointStates.READING_WP;
@@ -127,11 +132,15 @@ public class WaypointMananger extends DroneVariable {
 		case READING_WP:
 			if (msg.msgid == msg_mission_item.MAVLINK_MSG_ID_MISSION_ITEM) {
 				processReceivedWaypoint((msg_mission_item) msg);
+				doWaypointReceived(waypoints.get(waypoints.size() - 1),
+						waypoints.size(), waypointCount);
+
 				if (waypoints.size() < waypointCount) {
 					MavLinkWaypoint.requestWayPoint(myDrone, waypoints.size());
 				} else {
 					state = waypointStates.IDLE;
 					MavLinkWaypoint.sendAck(myDrone);
+					doEndWaypointReceiving(waypoints);
 					myDrone.mission.onWaypointsReceived(waypoints);
 				}
 				return true;
@@ -166,6 +175,28 @@ public class WaypointMananger extends DroneVariable {
 			return true;
 		}
 		return false;
+	}
+
+	public void setOnWaypointManagerListener(OnWaypointManagerListener mListener) {
+		this.listener = mListener;
+	}
+
+	private void doEndWaypointReceiving(List<waypoint> waypoints) {
+		if (listener != null) {
+			listener.onEndReceivingWaypoints(waypoints);
+		}
+	}
+
+	private void doBeginWaypointReceiving() {
+		if (listener != null) {
+			listener.onBeginReceivingWaypoints();
+		}
+	}
+
+	private void doWaypointReceived(waypoint wp, int index, int count) {
+		if (listener != null) {
+			listener.onWaypointReceived(wp, index, count);
+		}
 	}
 
 	private void processReceivedWaypoint(msg_mission_item msg) {

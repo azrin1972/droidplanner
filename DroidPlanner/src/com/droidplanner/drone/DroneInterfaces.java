@@ -1,5 +1,6 @@
 package com.droidplanner.drone;
 
+import com.droidplanner.drone.variables.waypoint;
 import com.droidplanner.parameters.Parameter;
 
 import java.util.List;
@@ -30,5 +31,11 @@ public class DroneInterfaces {
 		public void onParameterReceived(Parameter parameter, int index, int count);
 		public void onEndReceivingParameters(List<Parameter> parameter);
         public void onParamterMetaDataChanged();
+	}
+
+	public interface OnWaypointManagerListener {
+		public void onBeginReceivingWaypoints();
+		public void onWaypointReceived(waypoint wp, int index, int count);
+		public void onEndReceivingWaypoints(List<waypoint> waypoints);
 	}
 }
