@@ -31,7 +31,6 @@ public class WaypointMananger extends DroneVariable {
 	private OnWaypointManagerWriteListener writeListener;
 	private OnWaypointManagerVerifyListener verifyListener;
 	
-	private boolean doVerification;
 	/**
 	 * Try to receive all waypoints from the MAV.
 	 * 
@@ -50,13 +49,14 @@ public class WaypointMananger extends DroneVariable {
 	 * @param data
 	 *            waypoints to be written
 	 */
-	public void writeWaypoints(List<waypoint> data, boolean doVerification) {
-		this.doVerification = doVerification;
+	public int uploadWaypoints(List<waypoint> data) {
+		int mismatch = 0;
 		doBeginWaypointVerifying();
 		writeWaypoints(data);
 		getWaypoints();
-		verifyWaypoints(data,waypoints);
+		mismatch = verifyWaypoints(data,waypoints);
 		doEndWaypointVerifying(data);
+		return mismatch;
 	}
 	
 	public int verifyWaypoints(List<waypoint> source, List<waypoint> target){
