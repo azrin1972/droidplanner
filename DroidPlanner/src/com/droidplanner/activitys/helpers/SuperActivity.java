@@ -1,9 +1,12 @@
 package com.droidplanner.activitys.helpers;
 
+import java.util.List;
+
 import android.app.ActionBar;
 import android.app.ActionBar.OnNavigationListener;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -32,12 +35,14 @@ import com.droidplanner.dialogs.AltitudeDialog;
 import com.droidplanner.dialogs.AltitudeDialog.OnAltitudeChangedListner;
 import com.droidplanner.dialogs.checklist.PreflightDialog;
 import com.droidplanner.drone.Drone;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerReadListener;
+import com.droidplanner.drone.variables.waypoint;
 import com.droidplanner.fragments.checklist.ListXmlFragment;
 import com.droidplanner.fragments.helpers.OfflineMapFragment;
 import com.google.android.gms.maps.GoogleMap;
 
 public abstract class SuperActivity extends Activity implements
-		OnNavigationListener, ConnectionStateListner, OnAltitudeChangedListner, OnSystemArmListener{
+		OnNavigationListener, ConnectionStateListner, OnAltitudeChangedListner, OnSystemArmListener, OnWaypointManagerReadListener{
 
 	public abstract int getNavigationItem();
 
@@ -45,7 +50,8 @@ public abstract class SuperActivity extends Activity implements
 	public Drone drone;
 	private MenuItem connectButton;
 	private MenuItem armButton;
-
+	private ProgressDialog pd;
+	
 	private ScreenOrientation screenOrientation = new ScreenOrientation(this);
 
 	public SuperActivity() {
@@ -64,7 +70,8 @@ public abstract class SuperActivity extends Activity implements
 		app.conectionListner = this;
 		app.onSystemArmListener = this;
 		this.drone = app.drone;
-
+		drone.waypointMananger.setOnWaypointManagerReadListener(this);
+		
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		screenOrientation.unlock();
 	}
@@ -236,5 +243,37 @@ public abstract class SuperActivity extends Activity implements
 	@Override
 	public void onAltitudeChanged(double newAltitude) {
 		drone.mission.setDefaultAlt(newAltitude);
+	}
+	
+	@Override
+	public void onBeginReceivingWaypoints(){
+		pd = new ProgressDialog(this);
+		pd.setTitle("Downloading waypoints....");
+		pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		pd.setIndeterminate(true);
+		pd.setCancelable(false);
+		pd.setCanceledOnTouchOutside(true);
+
+		pd.show();		
+	}
+	
+	@Override
+	public void onWaypointReceived(waypoint wp, int index, int count){
+		if(pd != null) {
+			if(pd.isIndeterminate()) {
+				pd.setIndeterminate(false);
+				pd.setMax(count);
+			}
+			pd.setProgress(index);
+		}
+	}
+	
+	@Override
+	public void onEndReceivingWaypoints(List<waypoint> waypoints){
+		// dismiss progress dialog
+		if(pd != null) {
+			pd.dismiss();
+			pd = null;
+		}
 	}
 }

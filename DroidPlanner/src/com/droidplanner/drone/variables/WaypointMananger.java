@@ -12,7 +12,9 @@ import com.MAVLink.Messages.ardupilotmega.msg_mission_item_reached;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_request;
 import com.droidplanner.MAVLink.MavLinkWaypoint;
 import com.droidplanner.drone.Drone;
-import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerListener;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerReadListener;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerVerifyListener;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerWriteListener;
 import com.droidplanner.drone.DroneVariable;
 
 /**
@@ -25,7 +27,10 @@ import com.droidplanner.drone.DroneVariable;
  */
 public class WaypointMananger extends DroneVariable {
 
-	private OnWaypointManagerListener listener;
+	private OnWaypointManagerReadListener readListener;
+	private OnWaypointManagerWriteListener writeListener;
+	private OnWaypointManagerVerifyListener verifyListener;
+	
 	private boolean doVerification;
 	/**
 	 * Try to receive all waypoints from the MAV.
@@ -229,67 +234,75 @@ public class WaypointMananger extends DroneVariable {
 		return false;
 	}
 
-	public void setOnWaypointManagerListener(OnWaypointManagerListener mListener) {
-		this.listener = mListener;
+	public void setOnWaypointManagerReadListener(OnWaypointManagerReadListener mListener) {
+		this.readListener = mListener;
+	}
+
+	public void setOnWaypointManagerWriteListener(OnWaypointManagerWriteListener mListener) {
+		this.writeListener = mListener;
+	}
+
+	public void setOnWaypointManagerVerifyListener(OnWaypointManagerVerifyListener mListener) {
+		this.verifyListener = mListener;
 	}
 
 	private void doEndWaypointReceiving(List<waypoint> waypoints) {
-		if (listener != null && !doVerification) {
-			listener.onEndReceivingWaypoints(waypoints);
+		if (readListener != null) {
+			readListener.onEndReceivingWaypoints(waypoints);
 		}
 	}
 
 	private void doBeginWaypointReceiving() {
-		if (listener != null && !doVerification) {
-			listener.onBeginReceivingWaypoints();
+		if (readListener != null) {
+			readListener.onBeginReceivingWaypoints();
 		}
 	}
 
 	private void doWaypointReceived(waypoint wp, int index, int count) {
-		if (listener != null) {
-			listener.onWaypointReceived(wp, index, count);
+		if (readListener != null) {
+			readListener.onWaypointReceived(wp, index, count);
 		}
 	}
 
 	private void doEndWaypointUploading(List<waypoint> waypoints) {
-		if (listener != null && !doVerification) {
-			listener.onEndUploadingWaypoints(waypoints);
+		if (writeListener != null) {
+			writeListener.onEndUploadingWaypoints(waypoints);
 		}
 	}
 
 	private void doBeginWaypointUploading() {
-		if (listener != null && !doVerification) {
-			listener.onBeginUploadingWaypoints();
+		if (writeListener != null) {
+			writeListener.onBeginUploadingWaypoints();
 		}
 	}
 
 	private void doWaypointUploaded(waypoint wp, int index, int count) {
-		if (listener != null) {
-			listener.onWaypointUploaded(wp, index, count);
+		if (writeListener != null) {
+			writeListener.onWaypointUploaded(wp, index, count);
 		}
 	}
 
 	private void doEndWaypointVerifying(List<waypoint> waypoints) {
-		if (listener != null) {
-			listener.onEndVerifyingWaypoints(waypoints);
+		if (verifyListener != null) {
+			verifyListener.onEndVerifyingWaypoints(waypoints);
 		}
 	}
 
 	private void doBeginWaypointVerifying() {
-		if (listener != null) {
-			listener.onBeginVerifyingWaypoints();
+		if (verifyListener != null) {
+			verifyListener.onBeginVerifyingWaypoints();
 		}
 	}
 
 	private void doWaypointVerified(waypoint wp, int index, int count) {
-		if (listener != null) {
-			listener.onWaypointVerified(wp, index, count);
+		if (verifyListener != null) {
+			verifyListener.onWaypointVerified(wp, index, count);
 		}
 	}
 
 	private void doWaypointVerifyError(waypoint src, waypoint tgt, int index) {
-		if (listener != null) {
-			listener.onVerifyError(src, tgt, index);
+		if (verifyListener != null) {
+			verifyListener.onVerifyError(src, tgt, index);
 		}
 	}
 

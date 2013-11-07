@@ -33,18 +33,23 @@ public class DroneInterfaces {
         public void onParamterMetaDataChanged();
 	}
 
-	public interface OnWaypointManagerListener {
+	public interface OnWaypointManagerReadListener {
 		public void onBeginReceivingWaypoints();
 		public void onWaypointReceived(waypoint wp, int index, int count);
 		public void onEndReceivingWaypoints(List<waypoint> waypoints);
-		
+	}
+	
+	public interface OnWaypointManagerWriteListener {
 		public void onBeginUploadingWaypoints();
 		public void onWaypointUploaded(waypoint wp, int index, int count);
 		public void onEndUploadingWaypoints(List<waypoint> waypoints);
-		
+	}	
+
+	public interface OnWaypointManagerVerifyListener {
 		public void onBeginVerifyingWaypoints();
 		public void onWaypointVerified(waypoint wp, int index, int count);
 		public void onEndVerifyingWaypoints(List<waypoint> waypoints);
 		public void onVerifyError(waypoint src, waypoint tgt, int index);
 	}
+	
 }
