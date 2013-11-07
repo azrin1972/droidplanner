@@ -3,6 +3,7 @@ package com.droidplanner.activitys;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -17,6 +18,9 @@ import com.droidplanner.activitys.helpers.SuperActivity;
 import com.droidplanner.dialogs.AltitudeDialog.OnAltitudeChangedListner;
 import com.droidplanner.dialogs.openfile.OpenFileDialog;
 import com.droidplanner.dialogs.openfile.OpenMissionDialog;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerReadListener;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerVerifyListener;
+import com.droidplanner.drone.DroneInterfaces.OnWaypointManagerWriteListener;
 import com.droidplanner.drone.variables.waypoint;
 import com.droidplanner.file.IO.MissionReader;
 import com.droidplanner.file.IO.MissionWriter;
@@ -37,7 +41,9 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class PlanningActivity extends SuperActivity implements
 		OnMapInteractionListener, OnWaypointUpdateListner,
-		OnAltitudeChangedListner, OnPathFinishedListner, OnNewGridListner {
+		OnAltitudeChangedListner, OnPathFinishedListner, OnNewGridListner,
+		OnWaypointManagerVerifyListener, OnWaypointManagerWriteListener,
+		OnWaypointManagerReadListener {
 
 	public Polygon polygon;
 	private PlanningMapFragment planningMapFragment;
@@ -45,6 +51,7 @@ public class PlanningActivity extends SuperActivity implements
 	private GestureMapFragment gestureMapFragment;
 	private TextView lengthView;
 	private SurveyFragment surveyFragment;
+	private ProgressDialog pd;
 
 	@Override
 	public int getNavigationItem() {
@@ -65,7 +72,7 @@ public class PlanningActivity extends SuperActivity implements
 				.findFragmentById(R.id.missionFragment);
 		surveyFragment = (SurveyFragment) getFragmentManager()
 				.findFragmentById(R.id.surveyFragment);
-		
+
 		lengthView = (TextView) findViewById(R.id.textViewTotalLength);
 
 		polygon = new Polygon();
@@ -73,12 +80,15 @@ public class PlanningActivity extends SuperActivity implements
 		gestureMapFragment.setOnPathFinishedListner(this);
 		missionFragment.setMission(drone.mission);
 		planningMapFragment.setMission(drone.mission);
-		surveyFragment.setSurveyData(polygon,drone.mission.getDefaultAlt());
+		surveyFragment.setSurveyData(polygon, drone.mission.getDefaultAlt());
 		surveyFragment.setOnSurveyListner(this);
-		
-		
+
 		drone.mission.missionListner = this;
 
+		drone.waypointMananger.setOnWaypointManagerReadListener(this);
+		drone.waypointMananger.setOnWaypointManagerWriteListener(this);
+		drone.waypointMananger.setOnWaypointManagerVerifyListener(this);
+		
 		checkIntent();
 
 		update();
@@ -116,7 +126,8 @@ public class PlanningActivity extends SuperActivity implements
 			openMissionFile();
 			return true;
 		case R.id.menu_send_to_apm:
-			drone.mission.sendMissionToAPM();
+			onBeginVerifyingWaypoints();
+//			drone.mission.sendMissionToAPM();
 			return true;
 		case R.id.menu_clear_wp:
 			clearWaypointsAndUpdate();
@@ -127,14 +138,14 @@ public class PlanningActivity extends SuperActivity implements
 	}
 
 	private void zoom() {
-		planningMapFragment
-				.zoomToExtents(drone.mission.getAllVisibleCoordinates());
+		planningMapFragment.zoomToExtents(drone.mission
+				.getAllVisibleCoordinates());
 	}
 
 	private void processReceivedPoints(List<LatLng> points) {
-		switch (surveyFragment.getPathToDraw()){ 
+		switch (surveyFragment.getPathToDraw()) {
 		case MISSION:
-			drone.mission.addWaypointsWithDefaultAltitude(points);			
+			drone.mission.addWaypointsWithDefaultAltitude(points);
 			break;
 		case POLYGON:
 			polygon.addPoints(points);
@@ -158,8 +169,9 @@ public class PlanningActivity extends SuperActivity implements
 	}
 
 	private void updateDistanceView() {
-		Length length = PolylineTools.getPolylineLength(drone.mission.getPathPoints());
-		lengthView.setText(getString(R.string.length)+": "+ length);		
+		Length length = PolylineTools.getPolylineLength(drone.mission
+				.getPathPoints());
+		lengthView.setText(getString(R.string.length) + ": " + length);
 	}
 
 	@Override
@@ -194,8 +206,7 @@ public class PlanningActivity extends SuperActivity implements
 	}
 
 	@Override
-	public void onMovingWaypoint(waypoint source, LatLng latLng)
-	{
+	public void onMovingWaypoint(waypoint source, LatLng latLng) {
 		updateDistanceView();
 		missionFragment.update();
 	}
@@ -262,15 +273,107 @@ public class PlanningActivity extends SuperActivity implements
 		drone.mission.setWaypoints(grid.getWaypoints());
 		planningMapFragment.cameraOverlays.removeAll();
 		if (surveyFragment.isFootPrintOverlayEnabled()) {
-			planningMapFragment.cameraOverlays.addOverlays(grid.getCameraLocations(), surveyFragment.getSurveyData());		
+			planningMapFragment.cameraOverlays.addOverlays(
+					grid.getCameraLocations(), surveyFragment.getSurveyData());
 		}
-		update();		
+		update();
 	}
 
 	@Override
 	public void onClearPolygon() {
 		polygon.clearPolygon();
-		update();		
+		update();
 	}
+
+	@Override
+	public void onBeginUploadingWaypoints() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onWaypointUploaded(waypoint wp, int index, int count) {
+		if(pd != null) {
+			pd.setTitle(R.string.mission_uploading);
+			if(pd.isIndeterminate()) {
+				pd.setIndeterminate(false);
+				pd.setMax(count);
+			}
+			pd.setProgress(index);
+		}
+	}
+
+	@Override
+	public void onEndUploadingWaypoints(List<waypoint> waypoints) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onBeginReceivingWaypoints() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onWaypointReceived(waypoint wp, int index, int count) {
+		if(pd != null) {
+			String title = getString(R.string.mission_verifying);
+			pd.setTitle(title + " 1/2");
+			if(pd.isIndeterminate()) {
+				pd.setIndeterminate(false);
+				pd.setMax(count);
+			}
+			pd.setProgress(index);
+		}
+	}
+
+	@Override
+	public void onEndReceivingWaypoints(List<waypoint> waypoints) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onBeginVerifyingWaypoints() {
+		pd = new ProgressDialog(this);
+		pd.setIcon(R.drawable.ic_launcher);
+		pd.setTitle(R.string.mission_uploading);
+		pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		pd.setIndeterminate(true);
+		pd.setCancelable(false);
+		pd.setCanceledOnTouchOutside(true);
+
+		pd.show();		
+	}
+
+	@Override
+	public void onWaypointVerified(waypoint wp, int index, int count) {
+		if(pd != null) {
+			String title = getString(R.string.mission_verifying);
+			pd.setTitle(title + " 2/2");
+			if(pd.isIndeterminate()) {
+				pd.setIndeterminate(false);
+				pd.setMax(count);
+			}
+			pd.setProgress(index);
+		}
+	}
+
+	@Override
+	public void onEndVerifyingWaypoints(List<waypoint> waypoints) {
+		// dismiss progress dialog
+		if(pd != null) {
+			pd.dismiss();
+			pd = null;
+		}
+	}
+
+	@Override
+	public void onVerifyError(waypoint src, waypoint tgt, int index) {
+		if(pd != null) {
+		}
+	}
+
 
 }

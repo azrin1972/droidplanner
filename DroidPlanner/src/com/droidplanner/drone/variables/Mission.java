@@ -185,7 +185,8 @@ public class Mission extends DroneVariable implements PathSource, OnWaypointUpda
 		List<waypoint> data = new ArrayList<waypoint>();
 		data.add(getHome());
 		data.addAll(getWaypoints());
-		myDrone.waypointMananger.writeWaypoints(data);
+//		myDrone.waypointMananger.writeWaypoints(data);
+		myDrone.waypointMananger.uploadWaypoints(data);
 	}
 
 	@Override

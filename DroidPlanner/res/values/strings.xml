@@ -170,4 +170,7 @@
     <string name="rowheader_wp_no">WP#</string>
     <string name="rowheader_wp_delta">∆ WP</string>
     <string name="rowheader_wp_desc">Description</string>
+    <string name="mission_downloading">Downloading mission data&#8230;</string>
+    <string name="mission_uploading">Uploading mission data&#8230;</string>
+    <string name="mission_verifying">Verifying mission data&#8230;</string>
 </resources>
