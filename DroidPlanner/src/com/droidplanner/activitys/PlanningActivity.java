@@ -361,7 +361,8 @@ public class PlanningActivity extends SuperActivity implements
 	}
 
 	@Override
-	public void onEndVerifyingWaypoints(List<waypoint> waypoints) {
+	public void onEndVerifyingWaypoints(List<waypoint> source,
+			List<waypoint> target, int mismatch) {
 		// dismiss progress dialog
 		if(pd != null) {
 			pd.dismiss();
@@ -374,6 +375,7 @@ public class PlanningActivity extends SuperActivity implements
 		if(pd != null) {
 		}
 	}
+
 
 
 }
