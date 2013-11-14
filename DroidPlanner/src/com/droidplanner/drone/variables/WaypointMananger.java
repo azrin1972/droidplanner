@@ -32,7 +32,6 @@ public class WaypointMananger extends DroneVariable {
 	private OnWaypointManagerReadListener readListener;
 	private OnWaypointManagerWriteListener writeListener;
 	private OnWaypointManagerVerifyListener verifyListener;
-	private List<waypoint> source, target;
 
 	/**
 	 * Try to receive all waypoints from the MAV.
@@ -52,27 +51,42 @@ public class WaypointMananger extends DroneVariable {
 	 * @param data
 	 *            waypoints to be written
 	 */
-	public void verifyWaypoints(List<waypoint> source, List<waypoint> target) {
-		this.source = source;
-		this.target = target;
-		int mismatch = 0;
+	public void verifyWaypoints(final List<waypoint> source,
+			final List<waypoint> target) {
+		final Handler handler = new Handler();
+		
 		if (source.size() != target.size()) {
 			doEndWaypointVerifying(source, target, -1);
 		}
 
-		doBeginWaypointVerifying();
+		new Thread(new Runnable() {
+			public void run() {
+				int mismatch = 0;
+				doBeginWaypointVerifying();
 
-		for (int i = 0; i < source.size(); i++) {
-			waypoint src, tgt;
-			src = this.source.get(i);
-			tgt = this.target.get(i);
+				for (int i = 0; i < source.size(); i++) {
+					final waypoint src, tgt;
+					final int idx = i;
+					src = source.get(i);
+					tgt = target.get(i);
 
-			if (!compareWaypoint(src, tgt)) {
-				mismatch++;
-				doWaypointVerifyError(src, tgt, i);
+					if (!compareWaypoint(src, tgt)) {
+						mismatch++;
+						handler.post(new Runnable(){
+							public void run(){
+								doWaypointVerifyError(src, tgt, idx);								
+							}
+						});
+					}
+					handler.post(new Runnable(){
+						public void run(){
+							doWaypointVerified(src, idx, source.size());
+						}
+					});
+				}
+				doEndWaypointVerifying(source, target, mismatch);
 			}
-			doWaypointVerified(src, i, this.source.size());
-		}
+		}).start();
 	}
 
 	private boolean compareWaypoint(waypoint src, waypoint tgt) {

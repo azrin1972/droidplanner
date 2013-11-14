@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -365,9 +364,13 @@ public class PlanningActivity extends SuperActivity implements
 
 	@Override
 	public void onEndReceivingWaypoints(final List<waypoint> waypoints) {
-		Log.d("TAG", "start verify - " + String.valueOf(waypoints.size())
-				+ " / " + String.valueOf(tempWps.size()));
-		drone.waypointMananger.verifyWaypoints(waypoints, tempWps);
+		if(tempWps!=null){
+			drone.waypointMananger.verifyWaypoints(waypoints, tempWps);
+		}else{
+			if(pd!=null){
+				pd.dismiss();
+			}
+		}
 	}
 
 	@Override
