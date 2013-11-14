@@ -3,6 +3,8 @@ package com.droidplanner.drone.variables;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.os.Handler;
+
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_ack;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_count;
@@ -31,7 +33,7 @@ public class WaypointMananger extends DroneVariable {
 	private OnWaypointManagerWriteListener writeListener;
 	private OnWaypointManagerVerifyListener verifyListener;
 	private List<waypoint> source, target;
-	
+
 	/**
 	 * Try to receive all waypoints from the MAV.
 	 * 
@@ -50,44 +52,44 @@ public class WaypointMananger extends DroneVariable {
 	 * @param data
 	 *            waypoints to be written
 	 */
-	public int verifyWaypoints(List<waypoint> source, List<waypoint> target){
+	public void verifyWaypoints(List<waypoint> source, List<waypoint> target) {
+		this.source = source;
+		this.target = target;
 		int mismatch = 0;
-		if(source.size()!=target.size())
-			return -1; //return size mismatch
-		
-		for(int i=0;i<source.size();i++){
-			waypoint src, tgt;
-			src = source.get(i);
-			tgt = target.get(i);
-			doWaypointVerified(src, i, source.size());
-			
-			if(!compareWaypoint(src,tgt)){
-				mismatch++;
-				doWaypointVerifyError(src,tgt, i);
-			}
+		if (source.size() != target.size()) {
+			doEndWaypointVerifying(source, target, -1);
 		}
-		return mismatch;
+
+		doBeginWaypointVerifying();
+
+		for (int i = 0; i < source.size(); i++) {
+			waypoint src, tgt;
+			src = this.source.get(i);
+			tgt = this.target.get(i);
+
+			if (!compareWaypoint(src, tgt)) {
+				mismatch++;
+				doWaypointVerifyError(src, tgt, i);
+			}
+			doWaypointVerified(src, i, this.source.size());
+		}
 	}
 
-
 	private boolean compareWaypoint(waypoint src, waypoint tgt) {
-		return (
-				src.homeType==tgt.homeType &&
-				src.missionItem.autocontinue==tgt.missionItem.autocontinue &&
-				src.missionItem.command==tgt.missionItem.command &&
-				src.missionItem.compid==tgt.missionItem.compid &&
-				src.missionItem.msgid==tgt.missionItem.msgid &&
-				src.missionItem.sysid==tgt.missionItem.sysid &&
-				src.missionItem.param1==tgt.missionItem.param1 &&
-				src.missionItem.param2==tgt.missionItem.param2 &&
-				src.missionItem.param3==tgt.missionItem.param3 &&
-				src.missionItem.param4==tgt.missionItem.param4 &&
-				src.missionItem.x==tgt.missionItem.x &&
-				src.missionItem.y==tgt.missionItem.y &&
-				src.missionItem.z==tgt.missionItem.z &&
-				src.missionItem.target_component==tgt.missionItem.target_component &&
-				src.missionItem.target_system==tgt.missionItem.target_system
-				);
+		return (src.homeType == tgt.homeType
+				&& src.missionItem.autocontinue == tgt.missionItem.autocontinue
+				&& src.missionItem.command == tgt.missionItem.command
+				&& src.missionItem.compid == tgt.missionItem.compid
+				&& src.missionItem.msgid == tgt.missionItem.msgid
+				&& src.missionItem.sysid == tgt.missionItem.sysid
+				&& src.missionItem.param1 == tgt.missionItem.param1
+				&& src.missionItem.param2 == tgt.missionItem.param2
+				&& src.missionItem.param3 == tgt.missionItem.param3
+				&& src.missionItem.param4 == tgt.missionItem.param4
+				&& src.missionItem.x == tgt.missionItem.x
+				&& src.missionItem.y == tgt.missionItem.y
+				&& src.missionItem.z == tgt.missionItem.z
+				&& src.missionItem.target_component == tgt.missionItem.target_component && src.missionItem.target_system == tgt.missionItem.target_system);
 	}
 
 	public void writeWaypoints(List<waypoint> data) {
@@ -197,7 +199,8 @@ public class WaypointMananger extends DroneVariable {
 				MavLinkWaypoint.sendWaypoint(myDrone, writeIndex,
 						waypoints.get(writeIndex));
 				writeIndex++;
-				doWaypointUploaded(waypoints.get(writeIndex-1),writeIndex,waypoints.size());
+				doWaypointUploaded(waypoints.get(writeIndex - 1), writeIndex,
+						waypoints.size());
 				if (writeIndex >= waypoints.size()) {
 					state = waypointStates.WAITING_WRITE_ACK;
 				}
@@ -225,15 +228,18 @@ public class WaypointMananger extends DroneVariable {
 		return false;
 	}
 
-	public void setOnWaypointManagerReadListener(OnWaypointManagerReadListener mListener) {
+	public void setOnWaypointManagerReadListener(
+			OnWaypointManagerReadListener mListener) {
 		this.readListener = mListener;
 	}
 
-	public void setOnWaypointManagerWriteListener(OnWaypointManagerWriteListener mListener) {
+	public void setOnWaypointManagerWriteListener(
+			OnWaypointManagerWriteListener mListener) {
 		this.writeListener = mListener;
 	}
 
-	public void setOnWaypointManagerVerifyListener(OnWaypointManagerVerifyListener mListener) {
+	public void setOnWaypointManagerVerifyListener(
+			OnWaypointManagerVerifyListener mListener) {
 		this.verifyListener = mListener;
 	}
 
@@ -273,7 +279,8 @@ public class WaypointMananger extends DroneVariable {
 		}
 	}
 
-	private void doEndWaypointVerifying(List<waypoint> source, List<waypoint> target, int mismatch) {
+	private void doEndWaypointVerifying(List<waypoint> source,
+			List<waypoint> target, int mismatch) {
 		if (verifyListener != null) {
 			verifyListener.onEndVerifyingWaypoints(source, target, mismatch);
 		}

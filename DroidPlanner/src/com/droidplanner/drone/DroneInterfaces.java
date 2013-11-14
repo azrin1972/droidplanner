@@ -48,8 +48,8 @@ public class DroneInterfaces {
 	public interface OnWaypointManagerVerifyListener {
 		public void onBeginVerifyingWaypoints();
 		public void onWaypointVerified(waypoint wp, int index, int count);
-		public void onEndVerifyingWaypoints(List<waypoint> waypoints);
-		public void onVerifyError(waypoint src, waypoint tgt, int index);
+		public void onEndVerifyingWaypoints(List<waypoint> source, List<waypoint> target, int mismatch);
+		public void onVerifyError(waypoint source, waypoint target, int index);
 	}
 	
 }

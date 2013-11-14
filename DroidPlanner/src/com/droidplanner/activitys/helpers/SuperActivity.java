@@ -70,7 +70,6 @@ public abstract class SuperActivity extends Activity implements
 		app.conectionListner = this;
 		app.onSystemArmListener = this;
 		this.drone = app.drone;
-		drone.waypointMananger.setOnWaypointManagerReadListener(this);
 		
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		screenOrientation.unlock();
@@ -132,7 +131,7 @@ public abstract class SuperActivity extends Activity implements
 			drone.MavClient.toggleConnectionState();
 			return true;
 		case R.id.menu_load_from_apm:
-			drone.waypointMananger.getWaypoints();
+			getWaypointsFromAPM();
 			return true;
 		case R.id.menu_default_alt:
 			changeDefaultAlt();
@@ -158,6 +157,11 @@ public abstract class SuperActivity extends Activity implements
 		default:
 			return super.onMenuItemSelected(featureId, item);
 		}
+	}
+
+	private void getWaypointsFromAPM() {
+		drone.waypointMananger.setOnWaypointManagerReadListener(this);
+		drone.waypointMananger.getWaypoints();
 	}
 
 	private void showCheckList() {
