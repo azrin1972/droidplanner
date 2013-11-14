@@ -3,6 +3,8 @@ package com.droidplanner.drone.variables;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.os.Handler;
+
 import com.MAVLink.Messages.MAVLinkMessage;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_ack;
 import com.MAVLink.Messages.ardupilotmega.msg_mission_count;
@@ -30,6 +32,8 @@ public class WaypointMananger extends DroneVariable {
 	private OnWaypointManagerReadListener readListener;
 	private OnWaypointManagerWriteListener writeListener;
 	private OnWaypointManagerVerifyListener verifyListener;
+	private List<waypoint> source,target;
+	private int mismatch;
 	
 	/**
 	 * Try to receive all waypoints from the MAV.
@@ -49,35 +53,33 @@ public class WaypointMananger extends DroneVariable {
 	 * @param data
 	 *            waypoints to be written
 	 */
-	public int uploadWaypoints(List<waypoint> data) {
-		int mismatch = 0;
-		doBeginWaypointVerifying();
-		writeWaypoints(data);
-		getWaypoints();
-		mismatch = verifyWaypoints(data,waypoints);
-		doEndWaypointVerifying(data);
-		return mismatch;
-	}
-	
-	public int verifyWaypoints(List<waypoint> source, List<waypoint> target){
-		int mismatch = 0;
-		if(source.size()!=target.size())
-			return -1; //return size mismatch
+	public void verifyWaypoints(List<waypoint> source, List<waypoint> target){
+		this.source = source;
+		this.target = target;
+		this.mismatch = 0;
 		
-		for(int i=0;i<source.size();i++){
-			waypoint src, tgt;
-			src = source.get(i);
-			tgt = target.get(i);
-			doWaypointVerified(src, i, source.size());
-			
-			if(!compareWaypoint(src,tgt)){
-				mismatch++;
-				doWaypointVerifyError(src,tgt, i);
-			}
+		if(source.size()!=target.size())
+		{
+			doEndWaypointVerifying(source, target, -1);
 		}
-		return mismatch;
+		
+		doBeginWaypointVerifying();
+
+		verifyWaypoint(0);
 	}
 
+
+	public void verifyWaypoint(int i) {
+		waypoint src, tgt;
+		src = this.source.get(i);
+		tgt = this.target.get(i);
+		
+		if(!compareWaypoint(src,tgt)){
+			mismatch++;
+			doWaypointVerifyError(src,tgt, i);
+		}
+		doWaypointVerified(src, i, this.source.size());
+	}
 
 	private boolean compareWaypoint(waypoint src, waypoint tgt) {
 		return (
@@ -187,7 +189,7 @@ public class WaypointMananger extends DroneVariable {
 		case READING_WP:
 			if (msg.msgid == msg_mission_item.MAVLINK_MSG_ID_MISSION_ITEM) {
 				processReceivedWaypoint((msg_mission_item) msg);
-				doWaypointReceived(waypoints.get(waypoints.size() - 1),
+				doWaypointReceived(waypoints.get(waypoints.size()-1),
 						waypoints.size(), waypointCount);
 
 				if (waypoints.size() < waypointCount) {
@@ -282,9 +284,9 @@ public class WaypointMananger extends DroneVariable {
 		}
 	}
 
-	private void doEndWaypointVerifying(List<waypoint> waypoints) {
+	private void doEndWaypointVerifying(List<waypoint> source, List<waypoint> target, int mismatch) {
 		if (verifyListener != null) {
-			verifyListener.onEndVerifyingWaypoints(waypoints);
+			verifyListener.onEndVerifyingWaypoints(source, target, mismatch);
 		}
 	}
 
@@ -297,6 +299,10 @@ public class WaypointMananger extends DroneVariable {
 	private void doWaypointVerified(waypoint wp, int index, int count) {
 		if (verifyListener != null) {
 			verifyListener.onWaypointVerified(wp, index, count);
+			if(index+1<count)
+				verifyWaypoint(index+1);
+			else
+				doEndWaypointVerifying(this.source, this.target, this.mismatch);
 		}
 	}
 

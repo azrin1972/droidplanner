@@ -4,9 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -43,7 +48,7 @@ public class PlanningActivity extends SuperActivity implements
 		OnMapInteractionListener, OnWaypointUpdateListner,
 		OnAltitudeChangedListner, OnPathFinishedListner, OnNewGridListner,
 		OnWaypointManagerVerifyListener, OnWaypointManagerWriteListener,
-		OnWaypointManagerReadListener {
+		OnWaypointManagerReadListener, OnDismissListener {
 
 	public Polygon polygon;
 	private PlanningMapFragment planningMapFragment;
@@ -52,6 +57,7 @@ public class PlanningActivity extends SuperActivity implements
 	private TextView lengthView;
 	private SurveyFragment surveyFragment;
 	private ProgressDialog pd;
+	private List<waypoint> tempWps;
 
 	@Override
 	public int getNavigationItem() {
@@ -85,10 +91,6 @@ public class PlanningActivity extends SuperActivity implements
 
 		drone.mission.missionListner = this;
 
-		drone.waypointMananger.setOnWaypointManagerReadListener(this);
-		drone.waypointMananger.setOnWaypointManagerWriteListener(this);
-		drone.waypointMananger.setOnWaypointManagerVerifyListener(this);
-		
 		checkIntent();
 
 		update();
@@ -126,8 +128,7 @@ public class PlanningActivity extends SuperActivity implements
 			openMissionFile();
 			return true;
 		case R.id.menu_send_to_apm:
-			onBeginVerifyingWaypoints();
-//			drone.mission.sendMissionToAPM();
+			sendMissionToAPM();
 			return true;
 		case R.id.menu_clear_wp:
 			clearWaypointsAndUpdate();
@@ -135,6 +136,13 @@ public class PlanningActivity extends SuperActivity implements
 		default:
 			return super.onMenuItemSelected(featureId, item);
 		}
+	}
+
+	private void sendMissionToAPM() {
+		drone.waypointMananger.setOnWaypointManagerReadListener(this);
+		drone.waypointMananger.setOnWaypointManagerWriteListener(this);
+		drone.waypointMananger.setOnWaypointManagerVerifyListener(this);
+		drone.mission.sendMissionToAPM();
 	}
 
 	private void zoom() {
@@ -285,17 +293,43 @@ public class PlanningActivity extends SuperActivity implements
 		update();
 	}
 
+	private ProgressDialog getProgressDialog(boolean reCreate) {
+		if (pd != null && reCreate) {
+			if (pd.isShowing())
+				pd.dismiss();
+			else
+				pd = null;
+
+		} else if (pd != null) {
+			return pd;
+		}
+
+		pd = new ProgressDialog(this);
+		pd.setIcon(R.drawable.ic_launcher);
+		pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		pd.setIndeterminate(true);
+		pd.setCancelable(false);
+		pd.setCanceledOnTouchOutside(true);
+		pd.setOnDismissListener(this);
+
+		return pd;
+	}
+
 	@Override
 	public void onBeginUploadingWaypoints() {
-		// TODO Auto-generated method stub
-		
+		tempWps = new ArrayList<waypoint>();
+
+		pd = getProgressDialog(true);
+		pd.setTitle(R.string.mission_uploading);
+		pd.show();
 	}
 
 	@Override
 	public void onWaypointUploaded(waypoint wp, int index, int count) {
-		if(pd != null) {
+		tempWps.add(wp);
+		if (pd != null) {
 			pd.setTitle(R.string.mission_uploading);
-			if(pd.isIndeterminate()) {
+			if (pd.isIndeterminate()) {
 				pd.setIndeterminate(false);
 				pd.setMax(count);
 			}
@@ -305,75 +339,102 @@ public class PlanningActivity extends SuperActivity implements
 
 	@Override
 	public void onEndUploadingWaypoints(List<waypoint> waypoints) {
-		// TODO Auto-generated method stub
-		
+		drone.waypointMananger.getWaypoints();
 	}
 
 	@Override
 	public void onBeginReceivingWaypoints() {
-		// TODO Auto-generated method stub
-		
+		pd = getProgressDialog(false);
+		pd.setTitle(R.string.mission_verifying_1);
+		if (!pd.isShowing())
+			pd.show();
 	}
 
 	@Override
 	public void onWaypointReceived(waypoint wp, int index, int count) {
-		if(pd != null) {
-			String title = getString(R.string.mission_verifying);
+		if (pd != null) {
+			String title = getString(R.string.mission_verifying_1);
 			pd.setTitle(title + " 1/2");
-			if(pd.isIndeterminate()) {
+			if (pd.isIndeterminate()) {
 				pd.setIndeterminate(false);
 				pd.setMax(count);
 			}
-			pd.setProgress(index);
+			pd.setProgress(index+1);
 		}
 	}
 
 	@Override
-	public void onEndReceivingWaypoints(List<waypoint> waypoints) {
-		// TODO Auto-generated method stub
-		
+	public void onEndReceivingWaypoints(final List<waypoint> waypoints) {
+		Log.d("TAG", "start verify - " + String.valueOf(waypoints.size())
+				+ " / " + String.valueOf(tempWps.size()));
+		drone.waypointMananger.verifyWaypoints(waypoints, tempWps);
 	}
 
 	@Override
 	public void onBeginVerifyingWaypoints() {
-		pd = new ProgressDialog(this);
-		pd.setIcon(R.drawable.ic_launcher);
-		pd.setTitle(R.string.mission_uploading);
-		pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		pd.setIndeterminate(true);
-		pd.setCancelable(false);
-		pd.setCanceledOnTouchOutside(true);
 
-		pd.show();		
+		pd = getProgressDialog(false);
+		pd.setTitle(R.string.mission_verifying_2);
+		if (!pd.isShowing())
+			pd.show();
 	}
 
 	@Override
-	public void onWaypointVerified(waypoint wp, int index, int count) {
-		if(pd != null) {
-			String title = getString(R.string.mission_verifying);
+	public void onWaypointVerified(waypoint wp, final int index, int count) {
+		Log.d("TAG",
+				"Verifying " + String.valueOf(index) + "/"
+						+ String.valueOf(count));
+		if (pd != null) {
+			String title = getString(R.string.mission_verifying_2);
 			pd.setTitle(title + " 2/2");
-			if(pd.isIndeterminate()) {
+			if (pd.isIndeterminate()) {
 				pd.setIndeterminate(false);
 				pd.setMax(count);
 			}
+
 			pd.setProgress(index);
 		}
 	}
 
 	@Override
-	public void onEndVerifyingWaypoints(List<waypoint> waypoints) {
+	public void onEndVerifyingWaypoints(List<waypoint> source,
+			List<waypoint> target, int mismatch) {
 		// dismiss progress dialog
-		if(pd != null) {
+		if (pd != null) {
 			pd.dismiss();
-			pd = null;
 		}
+
+		String msg;
+		if (mismatch < 0)
+			msg = "Verification Error!!, size mismatch";
+		else if (mismatch > 0)
+			msg = String.valueOf(mismatch) + " data mismatch found";
+		else
+			msg = "Verification completed";
+
+		Toast toast = Toast.makeText(drone.context, msg, Toast.LENGTH_SHORT);
+		TextView v = (TextView) toast.getView().findViewById(
+				android.R.id.message);
+		v.setTextColor(mismatch != 0 ? Color.RED : Color.GREEN);
+		drone.tts.speak(msg);
+
+		tempWps.clear();
+		tempWps = null;
+		Log.d("TAG", "End");
+
 	}
 
 	@Override
 	public void onVerifyError(waypoint src, waypoint tgt, int index) {
-		if(pd != null) {
-		}
+		Toast.makeText(drone.context, "Waypoints received from Drone",
+				Toast.LENGTH_SHORT).show();
 	}
 
+	@Override
+	public void onDismiss(DialogInterface arg0) {
+		if (pd != null) {
+			pd = null;
+		}
+	}
 
 }
