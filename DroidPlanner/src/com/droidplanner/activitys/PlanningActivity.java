@@ -326,6 +326,9 @@ public class PlanningActivity extends SuperActivity implements
 	@Override
 	public void onWaypointUploaded(waypoint wp, int index, int count) {
 		tempWps.add(wp);
+		Log.d("TAG",
+				"Uploading " + String.valueOf(index) + "/"
+						+ String.valueOf(count));
 		if (pd != null) {
 			pd.setTitle(R.string.mission_uploading);
 			if (pd.isIndeterminate()) {
@@ -344,7 +347,11 @@ public class PlanningActivity extends SuperActivity implements
 	@Override
 	public void onBeginReceivingWaypoints() {
 		pd = getProgressDialog(false);
-		pd.setTitle(R.string.mission_verifying_1);
+		if(tempWps!=null)
+			pd.setTitle(R.string.mission_verifying_1);
+		else
+			pd.setTitle(R.string.mission_downloading);
+		
 		if (!pd.isShowing())
 			pd.show();
 	}
@@ -352,22 +359,31 @@ public class PlanningActivity extends SuperActivity implements
 	@Override
 	public void onWaypointReceived(waypoint wp, int index, int count) {
 		if (pd != null) {
-			String title = getString(R.string.mission_verifying_1);
-			pd.setTitle(title + " 1/2");
+			if(tempWps!=null)
+			{
+				String title = getString(R.string.mission_verifying_1);
+				pd.setTitle(title + " 1/2");
+			}else{
+				pd.setTitle(R.string.mission_downloading);				
+			}
+			
 			if (pd.isIndeterminate()) {
 				pd.setIndeterminate(false);
 				pd.setMax(count);
 			}
-			pd.setProgress(index+1);
+			pd.setProgress(index + 1);
 		}
 	}
 
 	@Override
 	public void onEndReceivingWaypoints(final List<waypoint> waypoints) {
-		if(tempWps!=null){
+		if (tempWps != null) {
+			Log.d("TAG",
+					"Verifying " + String.valueOf(waypoints.size()) + "/"
+							+ String.valueOf(tempWps.size()));
 			drone.waypointMananger.verifyWaypoints(waypoints, tempWps);
-		}else{
-			if(pd!=null){
+		} else {
+			if (pd != null) {
 				pd.dismiss();
 			}
 		}
@@ -402,11 +418,6 @@ public class PlanningActivity extends SuperActivity implements
 	@Override
 	public void onEndVerifyingWaypoints(List<waypoint> source,
 			List<waypoint> target, int mismatch) {
-		// dismiss progress dialog
-		if (pd != null) {
-			pd.dismiss();
-		}
-
 		String msg;
 		if (mismatch < 0)
 			msg = "Verification Error!!, size mismatch";
@@ -421,15 +432,23 @@ public class PlanningActivity extends SuperActivity implements
 		v.setTextColor(mismatch != 0 ? Color.RED : Color.GREEN);
 		drone.tts.speak(msg);
 
-		tempWps.clear();
-		tempWps = null;
+		if (tempWps != null) {
+			tempWps.clear();
+			tempWps = null;
+		}
 		Log.d("TAG", "End");
+
+		// dismiss progress dialog
+		if (pd != null) {
+			pd.dismiss();
+		}
+
 
 	}
 
 	@Override
 	public void onVerifyError(waypoint src, waypoint tgt, int index) {
-		Toast.makeText(drone.context, "Waypoints received from Drone",
+		Toast.makeText(drone.context, "Error - Verify",
 				Toast.LENGTH_SHORT).show();
 	}
 
@@ -439,6 +458,5 @@ public class PlanningActivity extends SuperActivity implements
 			pd = null;
 		}
 	}
-
 
 }

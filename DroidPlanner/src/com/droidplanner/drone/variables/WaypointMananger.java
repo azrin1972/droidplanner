@@ -57,6 +57,7 @@ public class WaypointMananger extends DroneVariable {
 		
 		if (source.size() != target.size()) {
 			doEndWaypointVerifying(source, target, -1);
+			return;
 		}
 
 		new Thread(new Runnable() {
@@ -202,8 +203,8 @@ public class WaypointMananger extends DroneVariable {
 				} else {
 					state = waypointStates.IDLE;
 					MavLinkWaypoint.sendAck(myDrone);
-					doEndWaypointReceiving(waypoints);
 					myDrone.mission.onWaypointsReceived(waypoints);
+					doEndWaypointReceiving(waypoints);
 				}
 				return true;
 			}
