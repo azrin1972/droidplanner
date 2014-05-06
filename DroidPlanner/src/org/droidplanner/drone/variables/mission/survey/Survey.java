@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.droidplanner.drone.variables.mission.Mission;
 import org.droidplanner.drone.variables.mission.MissionItem;
+import org.droidplanner.drone.variables.mission.commands.SetCamTriggerDist;
 import org.droidplanner.drone.variables.mission.survey.grid.Grid;
 import org.droidplanner.drone.variables.mission.survey.grid.GridBuilder;
 import org.droidplanner.file.IO.CameraInfo;
@@ -29,12 +30,12 @@ public class Survey extends MissionItem {
 	public Grid grid;
 	private Context context;
 
-	public Survey(Mission mission,List<LatLng> points, Context context) {
+	public Survey(Mission mission, List<LatLng> points, Context context) {
 		super(mission);
 		this.context = context;
 		polygon.addPoints(points);
 	}
-	
+
 	public void update(double angle, Altitude altitude, double overlap,
 			double sidelap) {
 		surveyData.update(angle, altitude, overlap, sidelap);
@@ -45,21 +46,21 @@ public class Survey extends MissionItem {
 		surveyData.setCameraInfo(camera);
 		mission.notifiyMissionUpdate();
 	}
-	
 
 	@Override
 	public List<LatLng> getPath() throws Exception {
-			build();
-			return grid.getCameraLocations();
+		build();
+		return grid.getCameraLocations();
 	}
 
-	private void build() throws Exception {		
+	private void build() throws Exception {
 		try {
-		//TODO find better point than (0,0) to reference the grid
-		GridBuilder gridBuilder = new GridBuilder(polygon, surveyData, new LatLng(0, 0),context);
-		polygon.checkIfValid(context);
-		grid = gridBuilder.generate();
-		grid.setAltitude(surveyData.getAltitude());
+			// TODO find better point than (0,0) to reference the grid
+			GridBuilder gridBuilder = new GridBuilder(polygon, surveyData,
+					new LatLng(0, 0), context);
+			polygon.checkIfValid(context);
+			grid = gridBuilder.generate();
+			grid.setAltitude(surveyData.getAltitude());
 		} catch (Exception e) {
 			Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
 			throw new Exception();
@@ -85,14 +86,31 @@ public class Survey extends MissionItem {
 		try {
 			List<msg_mission_item> list = new ArrayList<msg_mission_item>();
 			build();
+
+			setCamTrigger(list, (int) surveyData
+					.getLongitudinalPictureDistance().valueInMeters());
+
 			for (LatLng point : grid.gridPoints) {
 				msg_mission_item mavMsg = packSurveyPoint(point);
 				list.add(mavMsg);
 			}
+
+			setCamTrigger(list,0);
+			
 			return list;
 		} catch (Exception e) {
 			return new ArrayList<msg_mission_item>();
 		}
+	}
+
+	private void setCamTrigger(List<msg_mission_item> list, int aDistance) {
+
+		if (surveyData.getEnableCamTrigger() == true) {
+			SetCamTriggerDist camTrig = new SetCamTriggerDist(this);
+			camTrig.setDistance(aDistance);
+			list.add(camTrig.packMissionItem().get(0));
+		}
+
 	}
 
 	private msg_mission_item packSurveyPoint(LatLng point) {
@@ -115,7 +133,7 @@ public class Survey extends MissionItem {
 	@Override
 	public void unpackMAVMessage(msg_mission_item mavMsg) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
