@@ -15,6 +15,7 @@ public class SurveyData {
 	private Double overlap = 50.0;
 	private Double sidelap = 60.0;
 	private boolean generateInnerWps = false;
+	private boolean enableCamTrigger = true;
 	private CameraInfo camera = CameraInfoReader.getNewMockCameraInfo();
 
 	public void update(double angle, Altitude altitude, double overlap,
@@ -69,6 +70,14 @@ public class SurveyData {
 		generateInnerWps = state;
 	}
 	
+	public void setEnableCamTrigger(boolean enable) {
+		enableCamTrigger = enable;
+	}
+
+	public boolean getEnableCamTrigger() {
+		return enableCamTrigger;
+	}
+
 	public Altitude getAltitude() {
 		return altitude;
 	}
